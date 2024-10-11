@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM Template for Request API
+Resources:
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: dev
+      Cors:
+        AllowOrigin: '''*'''
+        AllowHeaders: '''*'''
+        AllowMethods: '''*'''
+  RequestApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: 2048
+      Timeout: 480
+      Policies:
+      - Statement:
+        - Sid: FullAccessToS3Bucket
+          Effect: Allow
+          Action:
+          - s3:ListBucket
+          - s3:GetObject
+          - s3:PutObject
+          Resource:
+          - arn:aws:s3:::biosarthi-genai
+          - arn:aws:s3:::biosarthi-genai/*
+        - Sid: BedrockScopedAccess
+          Effect: Allow
+          Action:
+          - bedrock:InvokeModel
+          Resource:
+          - arn:aws:bedrock:*::foundation-model/*
+      ImageConfig:
+        Command:
+        - app.lambda_handler
+      Events:
+        Root:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: Api
+            Path: /requestapi
+            Method: POST
+      ImageUri: requestapifunction:latest
+    Metadata:
+      DockerContext: /home/ubuntu/deployment/bio-sarthi/src/Request_api
+      DockerTag: latest
+      Dockerfile: /home/ubuntu/deployment/bio-sarthi/src/Request_api/Dockerfile
+      SamResourceId: RequestApiFunction
+  FirstApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: 2048
+      Timeout: 580
+      Policies:
+      - Statement:
+        - Sid: FullAccessToS3Bucket
+          Effect: Allow
+          Action:
+          - s3:ListBucket
+          - s3:GetObject
+          - s3:PutObject
+          Resource:
+          - arn:aws:s3:::biosarthi-genai
+          - arn:aws:s3:::biosarthi-genai/*
+        - Sid: InvokeRequestApiFunction
+          Effect: Allow
+          Action: lambda:InvokeFunction
+          Resource:
+            Fn::GetAtt:
+            - RequestApiFunction
+            - Arn
+        - Sid: BedrockScopedAccess
+          Effect: Allow
+          Action:
+          - bedrock:InvokeModel
+          Resource:
+          - arn:aws:bedrock:*::foundation-model/*
+      ImageConfig:
+        Command:
+        - app.lambda_handler
+      Environment:
+        Variables:
+          REQUEST_FUNCTION_ARN:
+            Fn::GetAtt:
+            - RequestApiFunction
+            - Arn
+      Events:
+        Root:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: Api
+            Path: /firstapi
+            Method: POST
+      ImageUri: firstapifunction:latest
+    Metadata:
+      DockerContext: /home/ubuntu/deployment/bio-sarthi/src/First_api
+      DockerTag: latest
+      Dockerfile: /home/ubuntu/deployment/bio-sarthi/src/First_api/Dockerfile
+      SamResourceId: FirstApiFunction
+  ResponseApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: 2048
+      Timeout: 480
+      Policies:
+      - Statement:
+        - Sid: FullAccessToS3Bucket
+          Effect: Allow
+          Action:
+          - s3:ListBucket
+          - s3:GetObject
+          - s3:PutObject
+          Resource:
+          - arn:aws:s3:::biosarthi-genai
+          - arn:aws:s3:::biosarthi-genai/*
+        - Sid: BedrockScopedAccess
+          Effect: Allow
+          Action:
+          - bedrock:InvokeModel
+          Resource:
+          - arn:aws:bedrock:*::foundation-model/*
+      ImageConfig:
+        Command:
+        - app.lambda_handler
+      Events:
+        Root:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: Api
+            Path: /responseapi
+            Method: POST
+      ImageUri: responseapifunction:latest
+    Metadata:
+      DockerContext: /home/ubuntu/deployment/bio-sarthi/src/Response_api
+      DockerTag: latest
+      Dockerfile: /home/ubuntu/deployment/bio-sarthi/src/Response_api/Dockerfile
+      SamResourceId: ResponseApiFunction

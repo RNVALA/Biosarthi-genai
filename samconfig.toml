@@ -1,0 +1,8 @@
+version = 0.1
+[default.deploy.parameters]
+stack_name = "sam-app"
+resolve_s3 = true
+s3_prefix = "sam-app"
+region = "ap-south-1"
+capabilities = "CAPABILITY_IAM"
+image_repositories = ["RequestApiFunction=809594200000.dkr.ecr.ap-south-1.amazonaws.com/samapp7427b055/requestapifunctione968905drepo", "FirstApiFunction=809594200000.dkr.ecr.ap-south-1.amazonaws.com/samapp7427b055/firstapifunctionafbe2b26repo", "ResponseApiFunction=809594200000.dkr.ecr.ap-south-1.amazonaws.com/samapp7427b055/responseapifunction0779980brepo"]
